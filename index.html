@@ -27,7 +27,7 @@ main{max-width:1250px;margin:auto;padding:16px}.page{display:none}.page.active{d
 .pjok-profile-hero{display:flex;gap:18px;align-items:center;padding:20px;border-radius:18px;background:linear-gradient(135deg,#f8fafc,#eef2ff);margin-bottom:18px}
 .pjok-avatar{width:105px;height:105px;border-radius:50%;object-fit:cover;border:4px solid #fff;box-shadow:0 6px 20px rgba(0,0,0,.12);background:#e5e7eb;display:flex;align-items:center;justify-content:center;font-size:42px}
 .pjok-upload{display:inline-block;padding:9px 13px;border-radius:10px;background:#111827;color:#fff;cursor:pointer;font-size:13px;margin-top:8px}.pjok-upload input{display:none}
-.pjok-toolbar{display:flex;gap:9px;flex-wrap:wrap;margin:14px 0}.pjok-search,.pjok-select{padding:10px 12px;border:1px solid #d1d5db;border-radius:10px;background:#fff}
+.-toolbar{display:flex;gap:9px;flex-wrap:wrap;margin:14px 0}.-search,.-select{padding:10px 12px;border:1px solid #d1d5db;border-radius:10px;background:#fff}
 .pjok-actions button{margin-right:6px}.pjok-mini{padding:7px 9px;border:0;border-radius:8px;cursor:pointer;background:#eef2ff}.pjok-danger{background:#fee2e2}
 .pjok-dashboard-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:13px;margin:16px 0}.pjok-stat{padding:17px;border:1px solid #e5e7eb;border-radius:16px;background:#fff}.pjok-stat b{font-size:27px;display:block;margin-top:4px}
 @media(max-width:800px){.pjok-dashboard-grid{grid-template-columns:repeat(2,1fr)}.pjok-profile-hero{align-items:flex-start}}
@@ -61,14 +61,32 @@ document.getElementById("nav").innerHTML=menus.map((m,i)=>`<button class="${i?""
 function save(){
   db.students=STUDENTS;
   localStorage.setItem(KEY,JSON.stringify(db));
-  syncStudentsToCloud();
+  syncAppDataToCloud();
 }
 
-async function syncStudentsToCloud(){
+async function syncAppDataToCloud(){
   try{
-    await fetch(API_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({action:"saveStudents",students:STUDENTS})});
+    await fetch(API_URL,{
+      method:"POST",
+      mode:"no-cors",
+      headers:{
+        "Content-Type":"text/plain;charset=utf-8"
+      },
+      body:JSON.stringify({
+        action:"saveAppData",
+        students:STUDENTS,
+        att:db.att,
+        scores:db.scores,
+        journal:db.journal,
+        progress:db.progress,
+        tasks:db.tasks,
+        profile:db.profile
+      })
+    });
+
     onlineStatus="Online • tersimpan lokal + dikirim ke Google Sheets";
     updateOnlineBadge();
+
   }catch(e){
     onlineStatus="Offline sementara • data tetap tersimpan di perangkat";
     updateOnlineBadge();
