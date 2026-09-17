@@ -1,4 +1,5 @@
-const CACHE = 'pjok-digital-v3';
+const CACHE = 'pjok-digital-v4';
+const APP_VERSION = '2026-09-17-v4';
 
 const APP_SHELL = [
   './',
@@ -8,7 +9,9 @@ const APP_SHELL = [
   './icon-512.png'
 ];
 
-// Install: simpan shell terbaru, lalu langsung aktifkan service worker baru.
+// ===============================
+// INSTALL
+// ===============================
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE)
@@ -17,7 +20,9 @@ self.addEventListener('install', event => {
   );
 });
 
-// Activate: hapus cache versi lama dan langsung ambil alih halaman.
+// ===============================
+// ACTIVATE
+// ===============================
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys()
@@ -29,52 +34,78 @@ self.addEventListener('activate', event => {
         )
       )
       .then(() => self.clients.claim())
+      .then(() =>
+        self.clients.matchAll({
+          type: 'window',
+          includeUncontrolled: true
+        })
+      )
+      .then(clients => {
+        // Setelah SW baru aktif,
+        // reload halaman yang sedang terbuka
+        clients.forEach(client => {
+          if (client.url) {
+            client.navigate(client.url);
+          }
+        });
+      })
   );
 });
 
-// Fetch:
-// index.html selalu mencoba jaringan terlebih dahulu agar versi terbaru tampil.
-// Jika internet tidak tersedia, gunakan cache lama.
+// ===============================
+// FETCH
+// ===============================
 self.addEventListener('fetch', event => {
   const request = event.request;
   const url = new URL(request.url);
 
-  // Jangan mengganggu request ke Google Apps Script atau domain lain.
+  // Jangan ganggu request ke domain lain,
+  // termasuk Google Apps Script.
   if (url.origin !== location.origin) return;
 
-  // Untuk halaman utama/index.html: network first.
+  // ==========================================
+  // INDEX / NAVIGASI
+  // Selalu ambil versi terbaru dari jaringan
+  // ==========================================
   if (
     request.mode === 'navigate' ||
     url.pathname.endsWith('/index.html')
   ) {
+
     event.respondWith(
-      fetch(request)
-        .then(response => {
-          const copy = response.clone();
+      fetch(request, {
+        cache: 'no-store'
+      })
+      .then(response => {
 
-          caches.open(CACHE)
-            .then(cache => cache.put(request, copy));
+        const copy = response.clone();
 
-          return response;
-        })
-        .catch(() =>
-          caches.match(request)
-            .then(cached =>
-              cached || caches.match('./index.html')
-            )
-        )
+        caches.open(CACHE)
+          .then(cache => cache.put('./index.html', copy));
+
+        return response;
+      })
+      .catch(() =>
+        caches.match('./index.html')
+      )
     );
 
     return;
   }
 
-  // File lainnya: cache first, lalu diperbarui dari jaringan.
+  // ==========================================
+  // FILE LAIN
+  // Cache first → update dari jaringan
+  // ==========================================
   event.respondWith(
     caches.match(request)
       .then(cached => {
+
         const network = fetch(request)
           .then(response => {
+
             if (response && response.ok) {
+
               const copy = response.clone();
 
               caches.open(CACHE)
