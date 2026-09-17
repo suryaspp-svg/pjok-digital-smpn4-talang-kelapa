@@ -1,13 +1,8 @@
 <!doctype html>
 <html lang="id">
 <head>
-  <meta name="theme-color" content="#0b5ed7">
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <link rel="manifest" href="manifest.webmanifest">
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>PJOK Digital SMPN 4 Talang Kelapa — V5</title>
+<title>PJOK Digital SMPN 4 Talang Kelapa — V5.7 Export</title>
 <style>
 :root{--nav:#123b75;--accent:#175cd3;--bg:#f4f6fa;--card:#fff;--line:#e5e7eb;--ink:#172033;--muted:#667085;--soft:#eef4ff;--ok:#087443;--warn:#b54708;--danger:#d92d20}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14px Arial,Helvetica,sans-serif}
@@ -27,7 +22,7 @@ main{max-width:1250px;margin:auto;padding:16px}.page{display:none}.page.active{d
 .pjok-profile-hero{display:flex;gap:18px;align-items:center;padding:20px;border-radius:18px;background:linear-gradient(135deg,#f8fafc,#eef2ff);margin-bottom:18px}
 .pjok-avatar{width:105px;height:105px;border-radius:50%;object-fit:cover;border:4px solid #fff;box-shadow:0 6px 20px rgba(0,0,0,.12);background:#e5e7eb;display:flex;align-items:center;justify-content:center;font-size:42px}
 .pjok-upload{display:inline-block;padding:9px 13px;border-radius:10px;background:#111827;color:#fff;cursor:pointer;font-size:13px;margin-top:8px}.pjok-upload input{display:none}
-.-toolbar{display:flex;gap:9px;flex-wrap:wrap;margin:14px 0}.-search,.-select{padding:10px 12px;border:1px solid #d1d5db;border-radius:10px;background:#fff}
+.pjok-toolbar{display:flex;gap:9px;flex-wrap:wrap;margin:14px 0}.pjok-search,.pjok-select{padding:10px 12px;border:1px solid #d1d5db;border-radius:10px;background:#fff}
 .pjok-actions button{margin-right:6px}.pjok-mini{padding:7px 9px;border:0;border-radius:8px;cursor:pointer;background:#eef2ff}.pjok-danger{background:#fee2e2}
 .pjok-dashboard-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:13px;margin:16px 0}.pjok-stat{padding:17px;border:1px solid #e5e7eb;border-radius:16px;background:#fff}.pjok-stat b{font-size:27px;display:block;margin-top:4px}
 @media(max-width:800px){.pjok-dashboard-grid{grid-template-columns:repeat(2,1fr)}.pjok-profile-hero{align-items:flex-start}}
@@ -61,32 +56,14 @@ document.getElementById("nav").innerHTML=menus.map((m,i)=>`<button class="${i?""
 function save(){
   db.students=STUDENTS;
   localStorage.setItem(KEY,JSON.stringify(db));
-  syncAppDataToCloud();
+  syncStudentsToCloud();
 }
 
-async function syncAppDataToCloud(){
+async function syncStudentsToCloud(){
   try{
-    await fetch(API_URL,{
-      method:"POST",
-      mode:"no-cors",
-      headers:{
-        "Content-Type":"text/plain;charset=utf-8"
-      },
-      body:JSON.stringify({
-        action:"saveAppData",
-        students:STUDENTS,
-        att:db.att,
-        scores:db.scores,
-        journal:db.journal,
-        progress:db.progress,
-        tasks:db.tasks,
-        profile:db.profile
-      })
-    });
-
+    await fetch(API_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({action:"saveStudents",students:STUDENTS})});
     onlineStatus="Online • tersimpan lokal + dikirim ke Google Sheets";
     updateOnlineBadge();
-
   }catch(e){
     onlineStatus="Offline sementara • data tetap tersimpan di perangkat";
     updateOnlineBadge();
@@ -286,7 +263,7 @@ function deleteStudent(no){
 }
 
 let attDate=new Date().toISOString().slice(0,10),attClass=cls()[0]||"VII.1";
-function attendance(){let c=attClass,d=attDate,key=d+"|"+c,a=db.att[key]||{};document.getElementById("absensi").innerHTML=`<div class="card"><h2>Absensi</h2><div class="row"><div><label>Kelas</label><select id="ac" onchange="attClass=this.value;attendance()">${cls().map(x=>`<option ${x===c?"selected":""}>${x}</option>`).join("")}</select></div><div><label>Tanggal</label><input type="date" id="ad" value="${d}" onchange="attDate=this.value;attendance()"></div></div><div class="grid" style="margin:12px 0"><div class="stat">Hadir<b id="ctH">0</b></div><div class="stat">Sakit<b id="ctS">0</b></div><div class="stat">Izin<b id="ctI">0</b></div><div class="stat">Alpa<b id="ctA">0</b></div></div><div class="scroll"><table><thead><tr><th>No</th><th>Nama</th><th>Status</th></tr></thead><tbody>${STUDENTS.filter(s=>s.kelas===c).map(s=>`<tr><td>${s.no}</td><td>${esc(s.nama)}</td><td><div class="att">${["H","S","I","A"].map(v=>`<button class="${(a[s.no]||"H")===v?"on":""}" onclick="setAtt(${s.no},'${v}')">${v}</button>`).join("")}</div></td></tr>`).join("")}</tbody></table></div><div class="actions"><button class="btn" onclick="saveAtt()">Simpan Absensi</button></div><p class="muted">H = Hadir • S = Sakit • I = Izin • A = Alpa. Default tampilan adalah Hadir; data tersimpan saat disimpan.</p></div>`;countAtt(a)}
+function attendance(){let c=attClass,d=attDate,key=d+"|"+c,a=db.att[key]||{};document.getElementById("absensi").innerHTML=`<div class="card"><h2>Absensi</h2><div class="row"><div><label>Kelas</label><select id="ac" onchange="attClass=this.value;attendance()">${cls().map(x=>`<option ${x===c?"selected":""}>${x}</option>`).join("")}</select></div><div><label>Tanggal</label><input type="date" id="ad" value="${d}" onchange="attDate=this.value;attendance()"></div></div><div class="grid" style="margin:12px 0"><div class="stat">Hadir<b id="ctH">0</b></div><div class="stat">Sakit<b id="ctS">0</b></div><div class="stat">Izin<b id="ctI">0</b></div><div class="stat">Alpa<b id="ctA">0</b></div></div><div class="scroll"><table><thead><tr><th>No</th><th>Nama</th><th>Status</th></tr></thead><tbody>${STUDENTS.filter(s=>s.kelas===c).map(s=>`<tr><td>${s.no}</td><td>${esc(s.nama)}</td><td><div class="att">${["H","S","I","A"].map(v=>`<button class="${(a[s.no]||"H")===v?"on":""}" onclick="setAtt(${s.no},'${v}')">${v}</button>`).join("")}</div></td></tr>`).join("")}</tbody></table></div><div class="actions"><button class="btn" onclick="saveAtt()">Simpan Absensi</button><button class="btn green" onclick="exportAttendanceExcel()">📊 Export Excel Tanggal Ini</button><button class="btn gray" onclick="exportAttendanceHistoryExcel()">📅 Export Excel Rekap Kelas</button></div><p class="muted">H = Hadir • S = Sakit • I = Izin • A = Alpa. Export tanggal ini mengikuti kelas dan tanggal yang dipilih. Rekap Kelas merangkum seluruh tanggal absensi yang tersimpan untuk kelas tersebut.</p></div>`;countAtt(a)}
 function setAtt(no,v){let key=attDate+"|"+attClass;db.att[key]=db.att[key]||{};db.att[key][no]=v;save();attendance()}
 function countAtt(a){["H","S","I","A"].forEach(v=>{let el=document.getElementById("ct"+v);if(el)el.textContent=STUDENTS.filter(s=>s.kelas===attClass).filter(s=>(a[s.no]||"H")===v).length})}
 function saveAtt(){save();alert("Absensi tersimpan")}
@@ -359,19 +336,138 @@ function journal(){document.getElementById("jurnal").innerHTML=`<div class="card
 function saveJournal(){db.journal[Date.now()]={date:jd.value,class:jc.value,material:jm.value,note:jn.value};save();journal();alert("Jurnal tersimpan")}
 function reflection(){document.getElementById("pemantik").innerHTML=`<div class="card"><h2>Pemantik & Refleksi</h2><div class="material"><h3>Pemantik</h3><p>Bagaimana teknik yang benar membantu kita bergerak lebih efektif, aman, dan percaya diri?</p></div><div class="material"><h3>Refleksi siswa</h3><ol><li>Apa yang sudah saya kuasai?</li><li>Kesalahan apa yang masih saya lakukan?</li><li>Latihan apa yang akan saya lakukan untuk memperbaikinya?</li></ol></div></div>`}
 function recap(){
-let rows=STUDENTS.map(s=>{let g=grade(s.kelas),vals=[];for(let b=1;b<=8;b++){let n=CURRICULUM[g][b].subs.length;vals.push(finalFor(s,b,g,n)??"-")}return `<tr><td>${s.no}</td><td>${esc(s.nama)}</td><td>${s.kelas}</td>${vals.map(v=>`<td>${v}</td>`).join("")}</tr>`}).join("");
-let taskRows=STUDENTS.map(s=>{let g=grade(s.kelas),v=[];for(let b=1;b<=8;b++){let x=db.tasks[s.no+"|"+g+"|T|"+b];v.push(x&&x.main!=null?Math.max(+x.main||0,+x.rem||0):"-")}return `<tr><td>${s.no}</td><td>${esc(s.nama)}</td><td>${s.kelas}</td>${v.map(x=>`<td>${x}</td>`).join("")}</tr>`}).join("");
-document.getElementById("rekap").innerHTML=`<div class="card"><h2>Rekap Nilai</h2><p class="muted">Nilai BAB dihitung dari nilai efektif submateri.</p><div class="scroll"><table><thead><tr><th>No</th><th>Nama</th><th>Kelas</th>${[1,2,3,4,5,6,7,8].map(b=>`<th>BAB ${b}</th>`).join("")}</tr></thead><tbody>${rows}</tbody></table></div></div>
-<div class="card"><h2>Rekap Tugas per BAB</h2><p class="muted">Nilai tugas berdiri sendiri dan tidak masuk ke Nilai BAB.</p><div class="scroll"><table><thead><tr><th>No</th><th>Nama</th><th>Kelas</th>${[1,2,3,4,5,6,7,8].map(b=>`<th>Tugas ${b}</th>`).join("")}</tr></thead><tbody>${taskRows}</tbody></table></div><div class="actions"><button class="btn green" onclick="exportCSV()">Export Rekap CSV</button></div></div>`}
-function exportCSV(){
-let out=[["No","Nama","Kelas",...Array.from({length:8},(_,i)=>"BAB "+(i+1)),...Array.from({length:8},(_,i)=>"Tugas BAB "+(i+1))].join(",")];
-STUDENTS.forEach(s=>{let g=grade(s.kelas),v=[],t=[];for(let b=1;b<=8;b++){v.push(finalFor(s,b,g,CURRICULUM[g][b].subs.length)||"");let x=db.tasks[s.no+"|"+g+"|T|"+b];t.push(x&&x.main!=null?Math.max(+x.main||0,+x.rem||0):"")}out.push([s.no,'"'+s.nama.replaceAll('"','""')+'"',s.kelas,...v,...t].join(","))});
-let blob=new Blob(["\ufeff"+out.join("\n")],{type:"text/csv;charset=utf-8"}),a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="Rekap_Nilai_PJOK_V5_1.csv";a.click()}
-render("dashboard");
-</script>
-<script>
-if ('serviceWorker' in navigator && location.protocol !== 'file:') {
-  window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
+  const currentClass=window.rekapClass||"";
+  window.rekapBab=window.rekapBab||"1";
+  const currentBab=window.rekapBab;
+  const filtered=currentClass?STUDENTS.filter(s=>s.kelas===currentClass):STUDENTS;
+  let rows=filtered.map(s=>{let g=grade(s.kelas),vals=[];for(let b=1;b<=8;b++){let n=CURRICULUM[g][b].subs.length;vals.push(finalFor(s,b,g,n)??"-")}return `<tr><td>${s.no}</td><td>${esc(s.nama)}</td><td>${s.kelas}</td>${vals.map(v=>`<td>${v}</td>`).join("")}</tr>`}).join("");
+  let taskRows=filtered.map(s=>{let g=grade(s.kelas),v=[];for(let b=1;b<=8;b++){let x=db.tasks[s.no+"|"+g+"|T|"+b];v.push(x&&x.main!=null?Math.max(+x.main||0,+x.rem||0):"-")}return `<tr><td>${s.no}</td><td>${esc(s.nama)}</td><td>${s.kelas}</td>${v.map(x=>`<td>${x}</td>`).join("")}</tr>`}).join("");
+  document.getElementById("rekap").innerHTML=`<div class="card"><h2>Rekap Nilai</h2><p class="muted">Nilai BAB dihitung dari nilai efektif submateri. Pilih kelas untuk melihat dan mengekspor rekap khusus kelas.</p><div class="row"><div><label>Kelas</label><select onchange="window.rekapClass=this.value;recap()"><option value="">Semua Kelas</option>${cls().map(c=>`<option value="${c}" ${c===currentClass?"selected":""}>${c}</option>`).join("")}</select></div><div><label>BAB untuk export</label><select id="rekapBab" onchange="window.rekapBab=this.value"><option value="">Pilih BAB</option>${[1,2,3,4,5,6,7,8].map(b=>`<option value="${b}" ${String(b)===String(currentBab)?"selected":""}>BAB ${b}</option>`).join("")}</select></div></div><div class="actions"><button class="btn green" onclick="exportGradesExcel()">📊 Export Excel Nilai Kelas</button><button class="btn" onclick="exportBabExcel()">📘 Export Excel per BAB</button><button class="btn gray" onclick="exportAllGradesExcel()">📚 Export Excel Semua Kelas</button></div><div class="scroll"><table><thead><tr><th>No</th><th>Nama</th><th>Kelas</th>${[1,2,3,4,5,6,7,8].map(b=>`<th>BAB ${b}</th>`).join("")}</tr></thead><tbody>${rows}</tbody></table></div></div>
+  <div class="card"><h2>Rekap Tugas per BAB</h2><p class="muted">Nilai tugas berdiri sendiri dan tidak masuk ke Nilai BAB.</p><div class="scroll"><table><thead><tr><th>No</th><th>Nama</th><th>Kelas</th>${[1,2,3,4,5,6,7,8].map(b=>`<th>Tugas ${b}</th>`).join("")}</tr></thead><tbody>${taskRows}</tbody></table></div></div>`
 }
-</script>
-</body></html>
+
+/* ===================== EXPORT EXCEL (.XLSX) ===================== */
+function xlsxEsc(v){return String(v??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&apos;")}
+function excelCell(v){
+  if(v===null||v===undefined||v==="-") return `<c t="inlineStr"><is><t>-</t></is></c>`;
+  if(typeof v==="number" && Number.isFinite(v)) return `<c><v>${v}</v></c>`;
+  return `<c t="inlineStr"><is><t xml:space="preserve">${xlsxEsc(v)}</t></is></c>`;
+}
+function excelSheetXml(rows){
+  const xmlRows=rows.map((row,r)=>`<row r="${r+1}">${row.map((v,c)=>`<c r="${excelCol(c+1)}${r+1}"${typeof v==="number"&&Number.isFinite(v)?``:` t="inlineStr"`}>${typeof v==="number"&&Number.isFinite(v)?`<v>${v}</v>`:`<is><t xml:space="preserve">${xlsxEsc(v??"")}</t></is>`}</c>`).join("")}</row>`).join("");
+  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetViews><sheetView workbookViewId="0"/></sheetViews><sheetData>${xmlRows}</sheetData></worksheet>`;
+}
+function excelCol(n){let s="";while(n){let m=(n-1)%26;s=String.fromCharCode(65+m)+s;n=Math.floor((n-1)/26)}return s}
+function crc32(bytes){let table=crc32.table;if(!table){table=[];for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=(c&1)?(0xedb88320^(c>>>1)):(c>>>1);table[n]=c>>>0}crc32.table=table}let c=0xffffffff;for(let i=0;i<bytes.length;i++)c=table[(c^bytes[i])&255]^(c>>>8);return (c^0xffffffff)>>>0}
+function u16(n){return new Uint8Array([n&255,(n>>>8)&255])}
+function u32(n){return new Uint8Array([n&255,(n>>>8)&255,(n>>>16)&255,(n>>>24)&255])}
+function concatBytes(parts){let len=parts.reduce((a,b)=>a+b.length,0),out=new Uint8Array(len),p=0;for(const b of parts){out.set(b,p);p+=b.length}return out}
+function zipStore(files){
+  const enc=new TextEncoder(),locals=[],centrals=[];let offset=0;
+  for(const f of files){const name=enc.encode(f.name),data=typeof f.data==="string"?enc.encode(f.data):f.data,crc=crc32(data);const local=concatBytes([new Uint8Array([80,75,3,4]),u16(20),u16(0x0800),u16(0),u16(0),u16(0),u32(crc),u32(data.length),u32(data.length),u16(name.length),u16(0),name,data]);locals.push(local);const central=concatBytes([new Uint8Array([80,75,1,2]),u16(20),u16(20),u16(0x0800),u16(0),u16(0),u16(0),u32(crc),u32(data.length),u32(data.length),u16(name.length),u16(0),u16(0),u16(0),u16(0),u32(0),u32(offset),name]);centrals.push(central);offset+=local.length}
+  const centralStart=offset,centralData=concatBytes(centrals),localData=concatBytes(locals),end=concatBytes([new Uint8Array([80,75,5,6]),u16(0),u16(0),u16(files.length),u16(files.length),u32(centralData.length),u32(centralStart),u16(0)]);return concatBytes([localData,centralData,end])
+}
+function makeXlsx(sheets){
+  const files=[];
+  files.push({name:"[Content_Types].xml",data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>${sheets.map((_,i)=>`<Override PartName="/xl/worksheets/sheet${i+1}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`).join("")}<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>`});
+  files.push({name:"_rels/.rels",data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>`});
+  files.push({name:"xl/workbook.xml",data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets>${sheets.map((s,i)=>`<sheet name="${xlsxEsc(s.name)}" sheetId="${i+1}" r:id="rId${i+1}"/>`).join("")}</sheets></workbook>`});
+  files.push({name:"xl/_rels/workbook.xml.rels",data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">${sheets.map((_,i)=>`<Relationship Id="rId${i+1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${i+1}.xml"/>`).join("")}<Relationship Id="rId${sheets.length+1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`});
+  files.push({name:"xl/styles.xml",data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="1"><font><sz val="11"/><name val="Arial"/></font></fonts><fills count="1"><fill><patternFill patternType="none"/></fill></fills><borders count="1"><border/></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellXfs></styleSheet>`});
+  sheets.forEach((s,i)=>files.push({name:`xl/worksheets/sheet${i+1}.xml`,data:excelSheetXml(s.rows)}));
+  return zipStore(files);
+}
+function downloadXlsx(filename,sheets){const bytes=makeXlsx(sheets),blob=new Blob([bytes],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download=filename;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(url);a.remove()},1000)}
+function selectedRekapStudents(){const c=window.rekapClass||"";return c?STUDENTS.filter(s=>s.kelas===c):STUDENTS}
+function gradeRows(students){return students.map(s=>{const g=grade(s.kelas),row=[s.no,s.nama,s.kelas];for(let b=1;b<=8;b++)row.push(finalFor(s,b,g,CURRICULUM[g][b].subs.length)??"");return row})}
+function taskRows(students){return students.map(s=>{const g=grade(s.kelas),row=[s.no,s.nama,s.kelas];for(let b=1;b<=8;b++){const x=db.tasks[s.no+"|"+g+"|T|"+b];row.push(x&&x.main!=null?Math.max(+x.main||0,+x.rem||0):"")}return row})}
+function exportGradesExcel(){const students=selectedRekapStudents(),label=window.rekapClass||"SEMUA_KELAS";downloadXlsx(`Rekap_Nilai_PJOK_${label.replace(/[^A-Za-z0-9._-]/g,"_")}.xlsx`,[{name:"Rekap Nilai",rows:[["REKAP NILAI PJOK SMPN 4 TALANG KELAPA"],["Kelas",window.rekapClass||"Semua Kelas"],[],["No","Nama","Kelas","BAB 1","BAB 2","BAB 3","BAB 4","BAB 5","BAB 6","BAB 7","BAB 8"],...gradeRows(students)]},{name:"Rekap Tugas",rows:[["REKAP TUGAS PJOK"],["Kelas",window.rekapClass||"Semua Kelas"],[],["No","Nama","Kelas","Tugas BAB 1","Tugas BAB 2","Tugas BAB 3","Tugas BAB 4","Tugas BAB 5","Tugas BAB 6","Tugas BAB 7","Tugas BAB 8"],...taskRows(students)]}])}
+function exportAllGradesExcel(){const old=window.rekapClass;window.rekapClass="";exportGradesExcel();window.rekapClass=old}
+function exportBabExcel(){
+  const b=String(window.rekapBab||"");
+  if(!b){alert("Pilih BAB terlebih dahulu.");return}
+  const students=selectedRekapStudents();
+  const label=window.rekapClass||"SEMUA_KELAS";
+  const safeLabel=label.replace(/[^A-Za-z0-9._-]/g,"_");
+
+  // Ambil nama submateri berdasarkan jenjang siswa.
+  // Karena satu export dapat berisi lebih dari satu kelas, kita buat
+  // kolom submateri yang mencakup seluruh submateri yang muncul.
+  const maxSubs=students.reduce((m,s)=>{
+    const g=grade(s.kelas), info=CURRICULUM[g][b];
+    return Math.max(m, info.subs.length);
+  },0);
+
+  const subNames=[];
+  for(let i=0;i<maxSubs;i++){
+    let name="";
+    for(const s of students){
+      const g=grade(s.kelas), info=CURRICULUM[g][b];
+      if(info.subs[i]){name=info.subs[i].name;break}
+    }
+    subNames.push(name || `Submateri ${i+1}`);
+  }
+
+  const rows=[
+    ["REKAP NILAI PJOK PER BAB"],
+    ["BAB",b],
+    ["Kelas",window.rekapClass||"Semua Kelas"],
+    ["Keterangan","Nilai BAB = rata-rata Nilai Efektif seluruh submateri. Nilai Tugas terpisah."],
+    [],
+    ["No","Nama","Kelas","Nilai BAB","Tugas BAB",...subNames]
+  ];
+
+  students.forEach(s=>{
+    const g=grade(s.kelas);
+    const info=CURRICULUM[g][b];
+    const sub=[];
+    for(let i=0;i<maxSubs;i++){
+      if(i<info.subs.length){
+        const x=db.scores[scoreKey(s,b,i,g)]||{};
+        sub.push(eff(x)??"");
+      }else{
+        sub.push("");
+      }
+    }
+    const tx=db.tasks[s.no+"|"+g+"|T|"+b];
+    const tv=tx&&tx.main!=null?Math.max(+tx.main||0,+tx.rem||0):"";
+    rows.push([
+      s.no,
+      s.nama,
+      s.kelas,
+      finalFor(s,b,g,info.subs.length)??"",
+      tv,
+      ...sub
+    ]);
+  });
+
+  // Sheet kedua berisi daftar instrumen/submateri yang digunakan pada BAB tersebut.
+  const detail=[
+    ["DETAIL SUBMATERI BAB "+b],
+    ["Kelas","BAB","Submateri","Instrumen/Penilaian"]
+  ];
+  const seen={};
+  students.forEach(s=>{
+    const g=grade(s.kelas),info=CURRICULUM[g][b];
+    info.subs.forEach((m,i)=>{
+      const key=g+"|"+i;
+      if(!seen[key]){
+        seen[key]=true;
+        detail.push([g,"BAB "+b,m.name,m.assessment||""]);
+      }
+    });
+  });
+
+  downloadXlsx(
+    `Rekap_PJOK_BAB_${b}_${safeLabel}.xlsx`,
+    [
+      {name:`BAB ${b}`,rows},
+      {name:"Submateri",rows:detail}
+    ]
+  );
+}
+function exportAttendanceExcel(){const c=attClass,d=attDate,a=db.att[d+"|"+c]||{},students=STUDENTS.filter(s=>s.kelas===c);const rows=[["REKAP ABSENSI PJOK"],["Kelas",c],["Tanggal",d],[],["No","NIS","NISN","Nama","L/P","Kelas","Status"]];students.forEach(s=>rows.push([s.no,s.nis||"",s.nisn||"",s.nama,s.lp||"",s.kelas,a[s.no]||"H"]));downloadXlsx(`Absensi_${c}_${d}.xlsx`,[{name:"Absensi",rows}])}
+function exportAttendanceHistoryExcel(){const c=attClass,students=STUDENTS.filter(s=>s.kelas===c),dates=Object.keys(db.att||{}).filter(k=>k.endsWith("|"+c)).map(k=>k.split("|")[0]).filter(Boolean).sort();if(!dates.length){alert("Belum ada data absensi tersimpan untuk kelas "+c+".");return}const rows=[["REKAP KEHADIRAN KELAS"],["Kelas",c],[],["No","NIS","NISN","Nama","L/P","Kelas",...dates],...students.map(s=>{const row=[s.no,s.nis||"",s.nisn||"",s.nama,s.lp||"",s.kelas];dates.forEach(d=>{const a=db.att[d+"|"+c]||{};row.push(a[s.no]||"H")});return row})];downloadXlsx(`Rekap_Kehadiran_${c}.xlsx`,[{name:"Rekap Kehadiran",rows}])}
+
+render("dashboard");
+</script></body></html>
